@@ -25,6 +25,8 @@ if(F){
 # Workflow related packages
 library(rprojroot)
 library(knitr)
+# options(kableExtra.latex.load_packages=FALSE)
+library(kableExtra)
 library(NMprojectAZ) # also loads tidyproject
 library(pmworkbench)
 library(pmxplore)
@@ -39,6 +41,15 @@ library(GGally)
 library(zoo)
 library(PKNCA)
 
+
+# -----------------------------------------------
+# Settings for latex used in kableExtra as_image()
+# -----------------------------------------------
+latex_settings_standaloneAZ <- c(
+  "\\usepackage{arydshln}",
+  "\\usepackage[T1]{fontenc}",
+  "\\renewcommand{\\rmdefault}{ftm}"
+)
 
 # -----------------------------------------------
 # Settings for ggplot
