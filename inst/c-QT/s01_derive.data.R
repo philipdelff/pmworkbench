@@ -1,6 +1,6 @@
 ## EDA of QT SAD and MAD 
 ## Author: Dinko Rekic
-## Date: 03.02.2017
+## Date: 19.11.2019
 ## Reviwer:
 
 ## Script no 1
@@ -32,10 +32,10 @@ library(ggrepel)
 
 ## Import dataset
 #raw.dat<-read.csv("//samba-hpc/QCP_MODELING_OLD/CVMD/AZD5718/PMX/Activity_01_SMAD/Data/QT/D7550C00001NM_QT.csv")
-raw.dat<-read_csv("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/SourceData/Final/D7550C00001NM_QT.csv")
+raw.dat<-read_csv("SourceData/D7550C00001NM_QT.csv")
 
 ## Labels for graphics
-conc.label <- expression(paste("Concentrations (µmol/l)"))
+conc.label <- expression(paste("Concentrations (umol/l)"))
 
 
 DELTAQTcF.label <- expression(paste(Delta,"QTcF (ms)"))
@@ -67,6 +67,7 @@ my.sum.fun<-funs(mean   = mean(. ,na.rm=T),
                  LCL    = mean(. ,na.rm=T)+qnorm(0.05)*(sd(. ,na.rm=T)/sqrt(sum(!is.na(.)))),
                  UCL    = mean(. ,na.rm=T)+qnorm(0.95)*(sd(. ,na.rm=T)/sqrt(sum(!is.na(.)))))
 
+
 ## Cohort 1-8 = SAD, 9-12=MAD  
 qtpk<-raw.dat %>% 
   #filter(MDV==0) %>% 
@@ -80,14 +81,18 @@ qtpk<-raw.dat %>%
          QTCF=as.numeric(as.character(QTCF)),
          DQTCF=as.numeric(as.character(DQTCF)),
          DOSE=as.factor(DOSE), 
-         QTCB=QT/((RR/1000)^0.5),
+         ##Optional: get Bezett's corrected QT
+         QTCB=QT/((RR/1000)^0.5), 
+         ## Imput zero concentrations in the placebo group
          DV=ifelse(TRTID==0,0,DV),
+         ## Imput zero concentration at nominal time 0
          DV=ifelse(NOMTIME==0 & is.na(DV), 0, DV))
 
 
 
 ## Calculate mean placebo DQTCF
-Placebo.QTCF<-qtpk %>% filter(DOSE==0) %>% 
+Placebo.QTCF<-qtpk %>% 
+  filter(DOSE==0) %>% 
   group_by(NOMTIME, PART) %>% 
   summarise(Placebo.dQTcF.mean=mean(DQTCF, na.rm=T))
 
@@ -99,11 +104,15 @@ qtpk<-qtpk %>% left_join(., Placebo.QTCF)
 qtpk<-qtpk %>% mutate(DDQTCF=DQTCF-Placebo.dQTcF.mean)
 
 ## Calculate populaiton mean baseline QTCF and ad to qtpk dataset
+popMean.BQTCF<-qtpk %>% 
+  distinct(PATIENT, .keep_all=T) %>%
+  summarise(popMean.BQTCF=mean(BQTCF))
 
-popMean.BQTCF<-qtpk %>% distinct(PATIENT, .keep_all=T) %>%  summarise(popMean.BQTCF=mean(BQTCF))
 
 qtpk$QTcF.mB<-popMean.BQTCF[[1]]
 
+
+## Make informative variable names
 qtpk<-qtpk %>% 
   mutate(DOSE_TRT_FOOD=paste(TRT, DOSE, "mg", FASTED),
          ACTIVE=ifelse(TRTID==0,"Placebo", "Active"),
@@ -116,11 +125,12 @@ qtpk<-qtpk %>%
   filter(MAD_SAD_DAY!="Not used" & MAD_SAD_DAY!="MAD Day 9 dose") 
 
 
-write_csv(qtpk, "C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/DerivedData/qtpk.csv")
+write_csv(qtpk, "DerivedData/qtpk.csv")
 
-qtpk %>%  group_by(MAD_SAD_DAY, DOSE_TRT_FOOD) %>% summarise(Subjects_n=n_distinct(PATIENT),
-                                                             PK_n=sum(!is.na(DV)), 
-                                                             QT_n=sum(!is.na(QT))) %>%
-  write_csv(., "C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/DerivedData/Observations.csv")
+qtpk %>%  group_by(MAD_SAD_DAY, DOSE_TRT_FOOD) %>%
+  summarise(Subjects_n=n_distinct(PATIENT),
+            PK_n=sum(!is.na(DV)), 
+            QT_n=sum(!is.na(QT))) %>%
+  write_csv(., "DerivedData/Observations.csv")
 
   

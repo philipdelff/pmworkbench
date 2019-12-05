@@ -1,6 +1,6 @@
 ## EDA of QT SAD and MAD 
 ## Author: Dinko Rekic
-## Date: 03.02.2017
+## Date: 19.11.2019
 ## Reviwer:
 
 ## Script no 3 Fitting prespecified model
@@ -31,7 +31,7 @@ library(cowplot)
 library(ggrepel)
 
 ## Labels for graphics
-conc.label <- expression(paste("Concentrations (µmol/l)"))
+conc.label <- expression(paste("Concentrations (umol/l)"))
 
 
 DELTAQTcF.label <- expression(paste(Delta,"QTcF (ms)"))
@@ -42,12 +42,7 @@ TIME.label <- "Nominal hours"
 AZcol<-rep(c("#FFAB00", "#830051", "#003865", "#68D2DF", "#3C1053", "#C4D600", "#3F4445"),20)
 
 ## Import dataset-----------------------------------------------
-qtpk<-read_csv("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/DerivedData/qtpk.csv")
-
-
-
-
-
+qtpk<-read_csv("DerivedData/qtpk.csv")
 
 ## Summerize analysis dataset --------------------------------------------------------------------------------
 Missing.data<-qtpk %>%  group_by(DOSE_TRT_FOOD, MAD_SAD_DAY) %>%
@@ -58,7 +53,7 @@ Missing.data<-qtpk %>%  group_by(DOSE_TRT_FOOD, MAD_SAD_DAY) %>%
             N.QT.missing=sum(is.na(DQTCF))) 
  
 
-write.csv(Missing.data,"C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/DerivedData/Misisng.data.csv")
+write.csv(Missing.data,"DerivedData/Misisng.data.csv")
       
 
 ## Data prep----------------------------------------------------------------------------------------------------
@@ -99,8 +94,7 @@ Par.tab<-Par.tab.temp %>%
 Par.tab
 
 ## Save fixed effect table
-write.csv(Par.tab, "C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/Results/Fixed_effects_table.csv", 
-          row.names=F)
+write.csv(Par.tab, "Results/Fixed_effects_table.csv", row.names=F)
 
 
 ## Estimation of confidence intervals of random effect using profiling---------------------------------------
@@ -223,7 +217,6 @@ GOF_Pre_Spec = function(Pre_spec_model, lg=F){
   
 } 
 
+## Missing common caption for all plots (ToDo)
 GOF_Pre_Spec(Pre_spec_model)
-
-ggsave("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/Results/Prespecified_model_GOF.png",
-       width = 8, height = 8)
+ggsave("Results/Prespecified_model_GOF.png", width = 8, height = 8)

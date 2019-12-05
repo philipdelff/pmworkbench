@@ -1,6 +1,6 @@
 ## EDA of QT SAD and MAD 
 ## Author: Dinko Rekic
-## Date: 03.02.2017
+## Date: 19.11.2019
 ## Reviwer:
 
 ## Script no 4 prediciton table using the prespecified model
@@ -33,7 +33,7 @@ library(ggrepel)
 
 ## sourse fitting script------------------------------------------------------------------------
 
-source("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/scripts/s03_20170302_Modeling.R")
+source("scripts/s03_20170302_Modeling.R")
 
 
 ##Calculation of Cmax, and Tmax-----------------------------------------------------------
@@ -59,13 +59,15 @@ Cmax.df<-qtpk %>%
             Min.Tmax = min(Tmax, na.rm=T),
             n.id     = n_distinct(PATIENT)) %>%
   arrange(Cmax) %>% 
-  mutate_each(funs(round(.,4)), -DOSE_TRT_FOOD, -MAD_SAD_DAY)
+  mutate_if(is.numeric, funs(round(.,4)))
 
 ## Predict effect at Cmax----------------------------------------------------------------------------------------------
 ## Specify the concentrations of interest 
 ## Concentrations should be ordered from min to max
 
-Cmax<-Cmax.df %>% ungroup() %>%  slice(which.max(GMEAN)) %>%  select(GMEAN)
+Cmax<-Cmax.df %>% ungroup() %>% 
+  slice(which.max(GMEAN)) %>% 
+  select(GMEAN)
 
 
 Cmax.ref.grid <- ref.grid(Pre_spec_model,               # Model 
@@ -83,7 +85,7 @@ Cmax.dQTcF<-summary(Cmax.lsm, level=0.9) %>% filter(TRTID==1, DV!=0)
 
 dQTcF.tab<-Cmax.dQTcF %>% 
   dplyr::select(-SE, -df, -TRTID) %>%
-  rename(`Concentration (µmol/l)`= DV,
+  rename(`Concentration (?mol/l)`= DV,
          `Lower 90% CI`=lower.CL,
          `Upper 90% CI`= upper.CL, 
          Estimate=lsmean) %>%
@@ -107,7 +109,7 @@ Cmax.ddQTcF<- Cmax.ddQTcF %>% separate(contrast, sep=",", into="CONC", extra="dr
   mutate(CONC=as.numeric(CONC)) %>%
   filter(CONC!=0) %>%  #remove zero conc
   dplyr::select(-SE, -df) %>%
-  rename(`Concentration (µmol/l)`= CONC,
+  rename(`Concentration (?mol/l)`= CONC,
          `Lower 90% CI`=lower.CL,
          `Upper 90% CI`= upper.CL, 
          Estimate=estimate) %>%
@@ -121,4 +123,4 @@ Cmax.ddQTcF<- Cmax.ddQTcF %>% separate(contrast, sep=",", into="CONC", extra="dr
 
 Prediciton.table<-rbind(dQTcF.tab, Cmax.ddQTcF) 
 
-write.csv(Prediciton.table, "C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/Results/Prediciton.table.csv")
+write.csv(Prediciton.table, "Results/Prediciton.table.csv")

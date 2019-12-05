@@ -1,6 +1,6 @@
 ## EDA of QT SAD and MAD 
 ## Author: Dinko Rekic
-## Date: 03.02.2017
+## Date: 19.11.2019
 ## Reviwer:
 
 ## Script no 2 graphical analysis
@@ -20,9 +20,16 @@ library(cowplot)
 ## Auxiliary package for ggplot2 (Hysteresis plots)
 library(ggrepel)
 
+
+## Caption 
+date_time<-Sys.time()
+script_name<-"s02_20170302_EDA_plots.R"
+data_source <- "data source: D7550C00001NM_QT.csv"
+caption <- paste0(script_name, "\n", data_source, "\n", date_time)
+
 ## Settings for plots-----------------------------------------------------
 ## Labels for graphics
-conc.label <- expression(paste("Concentrations (µmol/l)"))
+conc.label <- expression(paste("Concentrations (umol/l)"))
 DELTAQTcF.label <- expression(paste(Delta,"QTcF (ms)"))
 DELTADELTA.label <- expression(paste(Delta,Delta,"QTcF (ms)"))
 TIME.label <- "Nominal hours"
@@ -59,7 +66,7 @@ wrapper <- function(x, ...)
 }
 
 ## Import dataset-----------------------------------------------
-qtpk<-read_csv("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/DerivedData/qtpk.csv")
+qtpk<-read_csv("DerivedData/qtpk.csv")
 
 ## Change order of factors
 qtpk$ACTIVE<-factor(qtpk$ACTIVE, levels = c("Placebo", "Active"))
@@ -74,9 +81,6 @@ mplot.data<- qtpk %>%
   gather(value = value, key = type, -RR, -PATIENT, -ACTIVE, -PART)
 
 
-
-
-
 ## Generate a matrix plot
 m.plot <- ggplot(data=mplot.data, aes(RR, value, col=ACTIVE))+
   geom_point(alpha=0.2)+
@@ -87,14 +91,13 @@ m.plot <- ggplot(data=mplot.data, aes(RR, value, col=ACTIVE))+
        x="RR interval", 
        y="QT interval (ms)", 
        subtitle="", 
-       caption="data source:D7550C00001NM_QT.csv")+
+       caption=caption)+
   scale_color_manual(values=AZcol)+
   scale_fill_manual(values=AZcol)
 
 m.plot
 
-ggsave("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/Results/mplot.png",
-       width = 9, height = 6)
+ggsave("Results/mplot.png", width = 9, height = 6)
 
 ## Concentration dHR and dQT by time figure ------------------------------------------
 
@@ -107,36 +110,35 @@ Sum.qtpk<-qtpk %>%
   ## Group by these factors
   group_by(KEY, PART,MAD_SAD_DAY, DOSE_TRT_FOOD,  ACTIVE, NOMTIME) %>%
   ## Summarize HR, PK, and QT by factors using my simmary function 
-  summarise_each(my.sum.fun, VALUE) %>%
+  summarise_at(vars(VALUE), my.sum.fun) %>%
   ## Show mean and Sd for PK and CI for HR and QT
   mutate(P.UCL = ifelse(KEY  == "DV", mean+sd, UCL),
          P.LCL = ifelse(KEY  == "DV", mean-sd, LCL)) %>%
   ungroup() %>%
   ## Labels for facets in plot
-  mutate(KEY = ifelse(KEY == "DV", "Concentration (µmol/l)",
+  mutate(KEY = ifelse(KEY == "DV", "Concentration (umol/l)",
                ifelse(KEY == "DHR", "\u0394Heart rate (bpm)",
                       "\u0394QTcF (ms)")))
 
-Sum.qtpk<-Sum.qtpk %>% filter(!is.na(mean)) ## All data not colelcted for all time points
+## All data not colelcted for all time points
+Sum.qtpk<-Sum.qtpk %>% filter(!is.na(mean)) 
 
-## Code to make figure by time figure
-
-ggplot(data=Sum.qtpk, aes(x=NOMTIME,y=mean, col=ACTIVE))+
+## Make figure by time figure
+By.Time.Figure<-ggplot(data=Sum.qtpk, aes(x=NOMTIME,y=mean, col=ACTIVE))+
   geom_linerange(aes(ymin=P.LCL, ymax=P.UCL))+
   geom_point()+
   geom_line(aes(x=NOMTIME,y=mean, linetype=ACTIVE, group=DOSE_TRT_FOOD))+
   labs(title="Concentration, DQTCF, and HR versus nominal time",
        x="Time (h)", y="",
        subtitle=wrapper("Placebo (SAD or MAD) versus all doses. Concentrations are shown as mean \u00b1SD, HR and BP are shown as mean and 90% CI",120), 
-       caption="data source:D7550C00001NM_QT.csv")+
+       caption=caption)+
   facet_grid(KEY~MAD_SAD_DAY, scales = "free_y")+
   scale_color_manual(values=AZcol)+
-  scale_fill_manual(values=AZcol) -> By.Time.Figure
+  scale_fill_manual(values=AZcol) 
 
-By.Time.Figure
 
-ggsave("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/Results/Time_Plot1.png",
-       width = 9, height = 6)
+
+ggsave("Results/Time_Plot1.png",By.Time.Figure, width = 9, height = 6)
 
 By.Time.Figure2<-ggplot(data=Sum.qtpk, aes(x=NOMTIME,y=mean, col=DOSE_TRT_FOOD))+
   geom_linerange(aes(ymin=P.LCL, ymax=P.UCL))+
@@ -145,15 +147,14 @@ By.Time.Figure2<-ggplot(data=Sum.qtpk, aes(x=NOMTIME,y=mean, col=DOSE_TRT_FOOD))
   labs(title="Concentration, DQTCF, and HR versus nominal time",
        x="Time (h)", y="",
        subtitle=wrapper("All doses and Placebo (SAD or MAD). Concentrations are shown as mean \u00b1SD, HR and BP are shown as mean and 90% CI",120), 
-       caption="data source:D7550C00001NM_QT.csv")+
+       caption=caption)+
   facet_grid(KEY~MAD_SAD_DAY, scales = "free_y")+
   scale_color_manual(values=AZcol)+
   scale_fill_manual(values=AZcol)
 
-By.Time.Figure2
 
-ggsave("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/Results/Time_Plot2.png",
-       width = 9, height = 6)
+
+ggsave("Results/Time_Plot2.png", By.Time.Figure2, width = 9, height = 6)
 
 ## only keep highest dose
 Sum.qtpk %>% 
@@ -166,24 +167,22 @@ Sum.qtpk %>%
   labs(title="Concentration, DQTCF, and HR versus nominal time",
        x="Time (h)", y="",
        subtitle=wrapper("Top dose versus Placebo (SAD or MAD). Concentrations are shown as mean \u00b1SD, HR and BP are shown as mean and 90% CI",120), 
-       caption="data source:D7550C00001NM_QT.csv")+
+       caption=caption)+
   facet_grid(KEY~MAD_SAD_DAY, scales = "free_y")+
   scale_color_manual(values=AZcol)+
   scale_fill_manual(values=AZcol) -> By.Time.Figure3
 
-By.Time.Figure3
-ggsave("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/Results/Time_Plot3.png",
-       width = 9, height = 6)
+
+ggsave("Results/Time_Plot3.png", By.Time.Figure3, width = 9, height = 6)
 
 
 ## Hysteresis plot -----------------------------------------------------------------------------------------------
-
 hyst.qtpk<- qtpk %>%
   ## grouping factors 
   group_by(DOSE_TRT_FOOD, ACTIVE, MAD_SAD_DAY, NOMTIME) %>% 
   filter(!is.na(QT)) %>% 
   ## summarize ddQT and PK by factors using my summary function 
-  summarise_each(my.sum.fun, DV, DDQTCF)
+  summarise_at(vars(DV, DDQTCF), my.sum.fun)
 
 
 
@@ -196,15 +195,14 @@ ggplot(data=., aes(x=DV_mean, y=DDQTCF_mean, col=DOSE_TRT_FOOD))+
   labs(x=conc.label, y=DELTADELTA.label,
        title="No apparent evidence of hysteresis in SAD",
        subtitle="Mean Placebo corrected and baseline adjusted QTcF versus mean concentration at each nominal time",
-       caption="data source:D7550C00001NM_QT.csv")+
+       caption=caption)+
   scale_color_manual(values=AZcol)+
   theme(legend.position="none")+
   facet_wrap(~DOSE_TRT_FOOD, scale="free") -> Hysteresis.plot.SAD1
 
 Hysteresis.plot.SAD1
 
-ggsave("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/Results/Hysteresis.plot.SAD.png",
-       width = 10, height = 6)
+ggsave("Results/Hysteresis.plot.SAD.png",Hysteresis.plot.SAD1, width = 10, height = 6)
 
 ## Hysteresis plot MAD part
 hyst.qtpk %>%  filter(MAD_SAD_DAY=="MAD Day 1 dose" & ACTIVE!="Placebo") %>% 
@@ -215,14 +213,13 @@ ggplot(data=., aes(x=DV_mean, y=DDQTCF_mean, col=DOSE_TRT_FOOD))+
   labs(x=conc.label, y=DELTADELTA.label,
        title="No apparent evidence of hysteresis in MAD day 1",
        subtitle="Mean Placebo corrected and baseline adjusted QTcF versus mean concentration at each nominal time",
-       caption="data source:D7550C00001NM_QT.csv")+
+       caption=caption)+
   scale_color_manual(values=AZcol)+
   theme(legend.position="none")+
   facet_wrap(~DOSE_TRT_FOOD, labeller = "label_both", scale="free") ->Hysteresis.plot.MAD1
 
-Hysteresis.plot.MAD1
-ggsave("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/Results/Hysteresis.plot.MAD.png",
-       width = 8, height = 6)
+
+ggsave("Results/Hysteresis.plot.MAD.png",Hysteresis.plot.MAD1, width = 8, height = 6)
 
 ## Hysteresis plot MAD part
 hyst.qtpk %>%  filter(MAD_SAD_DAY=="MAD Day 10 dose" & ACTIVE!="Placebo") %>% 
@@ -233,14 +230,13 @@ hyst.qtpk %>%  filter(MAD_SAD_DAY=="MAD Day 10 dose" & ACTIVE!="Placebo") %>%
   labs(x=conc.label, y=DELTADELTA.label,
        title="No apparent evidence of hysteresis in MAD day 10",
        subtitle="Mean Placebo corrected and baseline adjusted QTcF versus mean concentration at each nominal time",
-       caption="data source:D7550C00001NM_QT.csv")+
+       caption=caption)+
   scale_color_manual(values=AZcol)+
   theme(legend.position="none")+
   facet_wrap(~DOSE_TRT_FOOD, labeller = "label_both", scale="free") ->Hysteresis.plot.MAD10
 
-Hysteresis.plot.MAD10
-ggsave("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/Results/Hysteresis.plot.MAD_10.png",
-       width = 8, height = 6)
+
+ggsave("Results/Hysteresis.plot.MAD_10.png",Hysteresis.plot.MAD10, width = 8, height = 6)
 
 
 ## Bin plot CONC-DDQT --------------------------------------------------------------------------
@@ -251,7 +247,7 @@ Bin.qtpk<- qtpk %>%
   filter(!is.na(DV) & !is.na(QT) & ACTIVE=="Active") %>%
   ## Create Deciles and use that as a factor for summary function 
   group_by(Decile=ntile(DV, 10), ACTIVE) %>% 
-  summarise_each(my.sum.fun, DV, DDQTCF, DQTCF)
+  summarise_at(vars(DV, DDQTCF, DQTCF), my.sum.fun)
 
 ## Create data for plotting bin width
 ## Shows the cutpoints of the bins (min and max)
@@ -273,12 +269,11 @@ Explor.plot<-ggplot()+
   labs(x=conc.label, y=DELTADELTA.label,
        title="No major non-linear trend is seen",
        subtitle="Exposure QTcF bin plot",
-       caption="data source:D7550C00001NM_QT.csv")+
+       caption="")+
   scale_color_manual(values=AZcol)+
   theme(legend.position="none")
 
-Explor.plot2<-Explor.plot+scale_x_log10()
+Explor.plot2<-Explor.plot+scale_x_log10()+labs(caption=caption)
 
-plot_grid(Explor.plot, Explor.plot2)
-ggsave("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/Results/Exploratory_DQTCF.png",
-       width = 10, height = 6)
+plot_grid(Explor.plot, Explor.plot2, align = "h")
+ggsave("Results/Exploratory_DQTCF.png",Explor.plot2, width = 10, height = 6)

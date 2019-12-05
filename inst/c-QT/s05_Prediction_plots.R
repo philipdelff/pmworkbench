@@ -1,6 +1,6 @@
 ## EDA of QT SAD and MAD 
 ## Author: Dinko Rekic
-## Date: 03.07.2017
+## Date: 19.11.2019
 ## Reviwer:
 
 ## Script no 5 prediciton plots using the prespecified model
@@ -32,11 +32,17 @@ library(ggrepel)
 
 ## sourse Prediciton script------------------------------------------------------------------------
 
-source("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/scripts/s04_20170306_Prediction.R")
+source("scripts/s04_20170306_Prediction.R")
+
+## Caption 
+date_time<-Sys.time()
+script_name<-"s05_20170306_Prediction_plots.R"
+data_source <- "data source: D7550C00001NM_QT.csv"
+caption <- paste0(script_name, "\n", data_source, "\n", date_time)
 
 ## Settings for plots------------------------------------------------------------------------------
 ## Labels for graphics
-conc.label <- expression(paste("Concentrations (µmol/l)"))
+conc.label <- expression(paste("Concentrations (umol/l)"))
 DELTAQTcF.label <- expression(paste(Delta,"QTcF (ms)"))
 DELTADELTA.label <- expression(paste(Delta,Delta,"QTcF (ms)"))
 TIME.label <- "Nominal hours"
@@ -144,12 +150,12 @@ Pred.plot.dQTcF.bin<-Pred.plot.dQTcF+
 Pred.plot.dQTcF.bin.obs<-Pred.plot.dQTcF.bin+
   geom_point(data=qtpk, aes(x=DV, y=DQTCF, col=as.factor(TRTID)), alpha=0.2)+
   labs(title=wrapper("Non-significant exposure-\u0394QTcF relationship",75),
-       subtitle=(wrapper("The black line represents predictions from the prespecified C-QTcF model.The shaded area represent the 90% CI of the prediction. The points and and bars repesent \u0394QTcF mean and 90% CI at the meadian concentration in a bin", 120)))
+       subtitle=(wrapper("The black line represents predictions from the prespecified C-QTcF model.The shaded area represent the 90% CI of the prediction. The points and and bars repesent \u0394QTcF mean and 90% CI at the meadian concentration in a bin", 120)),
+       caption=caption)
 
 Pred.plot.dQTcF.bin.obs
 
-ggsave("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/Results/Pred.plot.dQTcF.bin.obs.png",
-       width = 9, height = 6)
+ggsave("Results/Pred.plot.dQTcF.bin.obs.png",  Pred.plot.dQTcF.bin.obs,    width = 9, height = 6)
   
 
 
@@ -163,7 +169,7 @@ Pred.plot.ddQTcF<-ggplot()+
  
   geom_hline(aes(yintercept=10), linetype=2)+
   geom_hline(aes(yintercept=0), linetype=1)+
-  labs(x=conc.label, y=DELTADELTA.label)+
+  labs(x=conc.label, y=DELTADELTA.label,caption=caption)+
   scale_color_manual(values=AZcol[2:4])+
   theme(legend.position="none")
 
@@ -194,7 +200,6 @@ Pred.plot.ddQTcF.text<-Pred.plot.ddQTcF+
 represent the 90% CI of the prediction, Supratherapetic 1200 mg Cmax: 6.8 \u00B5mol/L",120))
 
 Pred.plot.ddQTcF.text
-ggsave("C:/Users/knhc208/OneDrive - AZCollaboration/Active Projects/AZ13702997_FLAP/cqt_20170203_sad_mad/Results/Pred.plot.ddQTcF.text.png",
-       width = 9, height = 6)
+ggsave("Results/Pred.plot.ddQTcF.text.png", width = 9, height = 6)
 
 
